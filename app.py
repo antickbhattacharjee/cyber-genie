@@ -32,7 +32,7 @@ if missing_vars:
 
 # Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("gemini-1.0-pro")
 
 # ----------------------------
 # Functions
@@ -102,4 +102,5 @@ def health():
 @app.route("/", methods=["GET"])
 def home():
     return "Cyber Genie is running", 200
+
 
