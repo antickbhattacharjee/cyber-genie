@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
 import requests
-from google import genai
+from openai import OpenAI
 import os
 import sys
 import warnings
-
-
 
 warnings.filterwarnings("ignore")
 
@@ -17,7 +15,7 @@ app = Flask(__name__)
 BESTCRM_API_URL = "https://app.bestcrmapp.in/api/v2/whatsapp-business/messages"
 ACCESS_TOKEN = os.environ.get("BESTCRM_ACCESS_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GROK_API_KEY = os.environ.get("GROK_API_KEY")
 
 # Check required environment variables
 missing_vars = []
@@ -25,17 +23,20 @@ if not ACCESS_TOKEN:
     missing_vars.append("BESTCRM_ACCESS_TOKEN")
 if not PHONE_NUMBER_ID:
     missing_vars.append("PHONE_NUMBER_ID")
-if not GEMINI_API_KEY:
-    missing_vars.append("GEMINI_API_KEY")
+if not GROK_API_KEY:
+    missing_vars.append("GROK_API_KEY")
 
 if missing_vars:
     print(f"[ERROR] Missing environment variables: {', '.join(missing_vars)}")
     sys.exit(1)
 
 # ----------------------------
-# Configure Gemini (NEW API)
+# Configure Grok (xAI)
 # ----------------------------
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = OpenAI(
+    api_key=GROK_API_KEY,
+    base_url="https://api.x.ai/v1"
+)
 
 # ----------------------------
 # Functions
@@ -63,15 +64,19 @@ def send_whatsapp_message(to_number, message):
     except requests.exceptions.RequestException as e:
         print(f"[WhatsApp] Request Error: {e}")
 
-def get_gemini_response(prompt_text):
+def get_grok_response(prompt_text):
     try:
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt_text
+        completion = client.chat.completions.create(
+            model="grok-2-latest",
+            messages=[
+                {"role": "system", "content": "You are Cyber Genie, a helpful cybersecurity assistant."},
+                {"role": "user", "content": prompt_text}
+            ],
+            temperature=0.7
         )
-        return response.text
+        return completion.choices[0].message.content.strip()
     except Exception as e:
-        print(f"[Gemini] Error: {e}")
+        print(f"[Grok] Error: {e}")
         return "Sorry, AI service is temporarily unavailable."
 
 # ----------------------------
@@ -88,7 +93,7 @@ def webhook():
 
         if message_text.lower().startswith("cyber genie,"):
             user_prompt = message_text[len("cyber genie,"):].strip()
-            reply = get_gemini_response(user_prompt)
+            reply = get_grok_response(user_prompt)
         else:
             reply = "Please start your message with 'Cyber Genie,'"
 
@@ -106,5 +111,3 @@ def health():
 @app.route("/", methods=["GET"])
 def home():
     return "Cyber Genie is running", 200
-
-
