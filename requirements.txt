@@ -1,4 +1,5 @@
 Flask
 requests
-google-generativeai
 gunicorn
+google-genai
+google-generativeai>=0.8.0
