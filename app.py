@@ -4,10 +4,7 @@ from google import genai
 import os
 import sys
 import warnings
-import google
-print("Google package location:", google.__file__)
-import pkg_resources
-print([p.project_name for p in pkg_resources.working_set])
+
 
 
 warnings.filterwarnings("ignore")
@@ -109,4 +106,5 @@ def health():
 @app.route("/", methods=["GET"])
 def home():
     return "Cyber Genie is running", 200
+
 
