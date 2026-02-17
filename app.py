@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
-import google.generativeai as genai
+from google import genai
 import os
 import sys
 import warnings
@@ -30,9 +30,10 @@ if missing_vars:
     print(f"[ERROR] Missing environment variables: {', '.join(missing_vars)}")
     sys.exit(1)
 
-# Configure Gemini
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.0-pro")
+# ----------------------------
+# Configure Gemini (NEW API)
+# ----------------------------
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ----------------------------
 # Functions
@@ -62,7 +63,10 @@ def send_whatsapp_message(to_number, message):
 
 def get_gemini_response(prompt_text):
     try:
-        response = model.generate_content(prompt_text)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt_text
+        )
         return response.text
     except Exception as e:
         print(f"[Gemini] Error: {e}")
@@ -79,8 +83,6 @@ def webhook():
     try:
         phone_number = data['data']['senderPhoneNumber']
         message_text = data['data']['content']['text'].strip()
-
-        reply = None
 
         if message_text.lower().startswith("cyber genie,"):
             user_prompt = message_text[len("cyber genie,"):].strip()
@@ -102,5 +104,3 @@ def health():
 @app.route("/", methods=["GET"])
 def home():
     return "Cyber Genie is running", 200
-
-
